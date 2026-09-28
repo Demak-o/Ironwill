@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Ironwill - Round-Based Roguelike</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Ironwill: a round-based roguelike. Clear the wave, spend the gold, survive the horde.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="frame">
+        <canvas id="game" width="1280" height="720"></canvas>
+        <div id="loading">
+            <div class="bar"><div id="loading-fill"></div></div>
+            <div id="loading-text">Loading assets...</div>
+        </div>
+    </div>
+    <div id="hint">Click the game to give it focus. WASD to move, Left Shift for your ability.</div>
+
+    <!-- Classic scripts (no build step, no module server needed) - order matters. -->
+    <script src="src/util.js"></script>
+    <script src="src/assets.js"></script>
+    <script src="src/audio.js"></script>
+    <script src="src/input.js"></script>
+    <script src="src/data/stats.js"></script>
+    <script src="src/data/characters.js"></script>
+    <script src="src/data/enemies.js"></script>
+    <script src="src/data/items.js"></script>
+    <script src="src/entities.js"></script>
+    <script src="src/arena.js"></script>
+    <script src="src/ui.js"></script>
+    <script src="src/game.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var canvas = document.getElementById('game');
+            IW.boot(canvas);
+            /* browsers only allow audio to start after a user gesture */
+            window.addEventListener('pointerdown', function () { IW.Audio.resume(); });
+            window.addEventListener('keydown', function () { IW.Audio.resume(); });
+        })();
+    </script>
+</body>
+</html>

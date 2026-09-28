@@ -1,0 +1,108 @@
+
+== data tables ==
+  ok   four playable classes
+  ok   each class has a weapon + ability
+  ok   every ability is bound to Left Shift
+  ok   the four classes have four distinct weapon behaviours
+  ok   four enemy colour tiers (blue belongs to the player)
+  ok   a decent item pool
+  ok   higher rarities have fewer items in the pool
+  ok   every item has an icon, mods and a price
+
+== luck scaling ==
+  luck  0 -> average rarity 1.652
+  luck 10 -> average rarity 1.795
+  luck 30 -> average rarity 2.048
+  luck 80 -> average rarity 2.558
+  ok   luck increases the average rarity of shop stock
+  ok   common stock dominates with no luck
+  ok   high luck meaningfully shifts the table
+  ok   legendaries are far more likely with luck
+  ok   legendaries are rare without luck
+
+== wave scaling ==
+  ok   enemy health multiplier never decreases
+  ok   spawn interval never gets slower
+  ok   tier unlock schedule is 1 / 3 / 6 / 9
+  ok   purple wave-20 warriors dwarf wave-1 black ones
+  ok   elites are tougher and richer
+  ok   late-wave enemies drop far more gold
+  ok   the stat sheet reports luck like any other stat
+
+== assets ==
+  loaded 197 / 197 sprite sheets
+  ok   every manifest entry loaded from disk
+  ok   Warrior_Idle -> 8 frames
+  ok   Lancer_Idle -> 12 frames of 320px
+  ok   Archer_Shoot -> 8 frames
+  ok   Monk Heal_Effect -> 11 frames
+  ok   tileset -> 12 columns of 48px tiles
+  ok   decor sheets sliced correctly
+
+== menu flow ==
+  ok   the Game controller constructs
+  ok   arena is larger than the viewport so the camera can pan
+  ok   decorations were placed in the arena
+  ok   ENTER on the title opens character select
+  ok   number keys select a class
+  ok   the run starts on wave 1
+  ok   the chosen class is used
+  ok   a wave intro banner is prepared
+
+== four simulated runs (one per class) ==
+  Knight  wave  4 | lvl  3 | kills  30 | items 2 | perks 1 | gold 21
+  ok   Knight: position stays finite
+  ok   Knight: health stays sane
+  ok   Knight: gold never goes negative
+  ok   Knight: item count stays bounded
+  ok   Knight: levelled up during the run
+  Archer  wave  5 | lvl  5 | kills  75 | items 6 | perks 3 | gold 9
+  ok   Archer: position stays finite
+  ok   Archer: health stays sane
+  ok   Archer: gold never goes negative
+  ok   Archer: item count stays bounded
+  ok   Archer: levelled up during the run
+  Lancer  wave  5 | lvl  4 | kills  46 | items 4 | perks 3 | gold 9
+  ok   Lancer: position stays finite
+  ok   Lancer: health stays sane
+  ok   Lancer: gold never goes negative
+  ok   Lancer: item count stays bounded
+  ok   Lancer: levelled up during the run
+  Monk    wave  5 | lvl  4 | kills  47 | items 4 | perks 3 | gold 23
+  ok   Monk: position stays finite
+  ok   Monk: health stays sane
+  ok   Monk: gold never goes negative
+  ok   Monk: item count stays bounded
+  ok   Monk: levelled up during the run
+
+== observations ==
+  states seen: {"wave":22799,"shop":15,"levelUp":10}
+  peak live enemies: 14
+  purchases 4 | rerolls 0 | heals 1 | level-ups 3 | deaths 1
+  ok   both the wave and the shop states were reached
+  ok   items were bought from the shop
+  ok   level-up boons were offered and taken
+  ok   the shop opened after cleared waves
+  ok   enemies spawn and pile up
+  ok   enemy count stays bounded
+
+== deep run (a funded build pushing into the late waves) ==
+  reached wave 13 (level 9, items 48, perks 8, hp 284/284)
+  ok   a funded run gets deep into the campaign
+  ok   no NaN after a long run
+  ok   no NaN enemy state
+  ok   no NaN projectile state
+  ok   no NaN pickup state
+  ok   the funded run accumulated items
+
+== campaign victory path ==
+  ok   clearing wave 20 opens the victory screen
+  ok   endless mode continues past wave 20
+
+== ui edge cases ==
+  ok   every screen draws without throwing
+  ok   hit testing returns an id or null
+  ok   interior tile lookup is correct
+  ok   decor base offsets are defined
+
+ALL CHECKS PASSED

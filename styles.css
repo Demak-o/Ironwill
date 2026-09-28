@@ -1,0 +1,80 @@
+/* Ironwill - page shell. The game itself is drawn on a fixed 1280x720 canvas. */
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #0e1013;
+    color: #e8e3d0;
+    font-family: Consolas, "Lucida Console", Monaco, monospace;
+    -webkit-font-smoothing: none;
+}
+
+#frame {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#game {
+    width: 100vw;
+    height: 56.25vw;          /* 16:9 */
+    max-height: 100vh;
+    max-width: 177.78vh;      /* 16:9 */
+    display: block;
+    background: #1d2b17;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    cursor: none;
+    touch-action: none;
+    box-shadow: 0 0 0 2px #000, 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+#loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: #0e1013;
+    z-index: 5;
+    letter-spacing: 2px;
+}
+
+#loading.hidden { display: none; }
+
+#loading .bar {
+    width: 340px;
+    height: 16px;
+    border: 2px solid #6b6a5a;
+    background: #23262b;
+    padding: 2px;
+}
+
+#loading-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(180deg, #b9d84f, #6f8f22);
+    transition: width 0.1s linear;
+}
+
+#loading-text { font-size: 13px; color: #b9b6a2; }
+
+#hint {
+    position: absolute;
+    bottom: 6px;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    color: #55584f;
+    letter-spacing: 1px;
+    z-index: 4;
+    pointer-events: none;
+}
