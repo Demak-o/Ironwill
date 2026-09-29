@@ -706,9 +706,9 @@
 
             var lines = [
                 'WASD / ARROWS    move',
+                'MOUSE    aim         LEFT CLICK (hold)    attack',
                 'LEFT SHIFT / SPACE    class ability',
-                'ESC / P    pause        TAB    stats        M    mute',
-                'Your weapon swings at the nearest foe automatically.'
+                'ESC / P    pause        TAB    stats        M    mute'
             ];
             for (var i = 0; i < lines.length; i++) {
                 UI.text(ctx, lines[i], VIEW_W / 2, 302 + i * 24, { size: 13, align: 'center', colour: COL.dim });

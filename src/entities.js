@@ -527,19 +527,13 @@
             }
         }
 
-        /* ---- aiming + attacking ---- */
-        var target = this.findTarget(0);
-        if (target) {
-            this.aim = Math.atan2(target.y - this.y, target.x - this.x);
-        } else if (this.moving) {
-            this.aim = Math.atan2(this.facing.y, this.facing.x || 0.001);
-        }
-        var range = this.weaponRange(w);
-        if (this.attackTimer <= 0 && target) {
-            if (U.dist2(this.x, this.y, target.x, target.y) <= Math.pow(range + target.radius, 2)) {
-                this.attackTimer = Math.max(0.1, w.cooldown / (1 + s.attackSpeed));
-                this.fireWeapon(target);
-            }
+        /* ---- aiming (mouse cursor) + attacking (hold left click to swing) ---- */
+        var mx = input.mouse.x + g.camera.x;
+        var my = input.mouse.y + g.camera.y;
+        this.aim = Math.atan2(my - this.y, mx - this.x);
+        if (input.mouse.down && this.attackTimer <= 0) {
+            this.attackTimer = Math.max(0.1, w.cooldown / (1 + s.attackSpeed));
+            this.fireWeapon();
         }
 
         this.updateAnim(dt);

@@ -285,6 +285,22 @@ console.log('\n== four simulated runs (one per class) ==');
             IW.Input.keys.KeyD = Math.cos(a) > 0.2;
             if (guard % 100 === 0) { IW.Input.keys.ShiftLeft = true; IW.Input.justPressed.ShiftLeft = true; }
 
+            /* mouse-aim at the nearest enemy and hold left click to attack */
+            const p0 = game.player;
+            let nte = null, nd = Infinity;
+            for (const e of game.enemies) {
+                if (e.dead) { continue; }
+                const dd = (e.x - p0.x) * (e.x - p0.x) + (e.y - p0.y) * (e.y - p0.y);
+                if (dd < nd) { nd = dd; nte = e; }
+            }
+            if (nte) {
+                IW.Input.mouse.x = nte.x - game.camera.x;
+                IW.Input.mouse.y = nte.y - game.camera.y;
+                IW.Input.mouse.down = true;
+            } else {
+                IW.Input.mouse.down = false;
+            }
+
             game.tick(dt);
             IW.Input.keys.ShiftLeft = false;
             IW.Input.endFrame();
@@ -336,17 +352,27 @@ console.log('\n== four simulated runs (one per class) ==');
 /* ---------------------------------------- deep run + late-game behaviour */
 
     console.log('\n== deep run (a funded build pushing into the late waves) ==');
-    /* The Game seeds its RNG from wall-clock time, which makes this funded deep run
-     * flaky. Pin a fixed seed here so the regression check is reproducible. */
-    game.rng = IW.util.makeRng(1337);
-    game.startRun(0);
-    game.player.gold = 5000;
+    /* The Game seeds its RNG from wall-clock time, which makes a funded deep run
+     * flaky, and reusing the already-run `game` above drags its leftover state into
+     * the sim. Run the deep check on a fresh, deterministically-seeded Game. */
+    const dgame = new IW.Game(canvas);
+    dgame.rng = IW.util.makeRng(5);
+    /* Wipe leftover keyboard/mouse state from the runs above so none of it bleeds
+     * into the first ticks of the isolated deep-run game. */
+    IW.Input.keys = {};
+    IW.Input.justPressed = {};
+    IW.Input.released = {};
+    IW.Input.mouse.x = 640; IW.Input.mouse.y = 360;
+    IW.Input.mouse.down = false; IW.Input.mouse.justDown = false; IW.Input.mouse.justUp = false;
+    dgame.startRun(0);
+    dgame.player.gold = 5000;
     let deepGuard = 0, deepDeaths = 0;
-    while (game.wave <= 22 && deepGuard++ < 50000) {
-        /* a bot that actually plays: run away from the nearest enemy and use its ability */
-        const p = game.player;
+    while (dgame.wave <= 22 && deepGuard++ < 50000) {
+        /* a bot that actually plays: run away from the nearest enemy, attack it with
+         * the mouse, and use the class ability */
+        const p = dgame.player;
         let nearest = null, best = Infinity;
-        for (const e of game.enemies) {
+        for (const e of dgame.enemies) {
             const d2 = (e.x - p.x) * (e.x - p.x) + (e.y - p.y) * (e.y - p.y);
             if (d2 < best) { best = d2; nearest = e; }
         }
@@ -360,37 +386,42 @@ console.log('\n== four simulated runs (one per class) ==');
                 IW.Input.keys.ShiftLeft = true;
                 IW.Input.justPressed.ShiftLeft = true;
             }
+            IW.Input.mouse.x = nearest.x - dgame.camera.x;
+            IW.Input.mouse.y = nearest.y - dgame.camera.y;
+            IW.Input.mouse.down = true;
+        } else {
+            IW.Input.mouse.down = false;
         }
-        game.tick(dt);
+        dgame.tick(dt);
         IW.Input.keys.ShiftLeft = false;
         IW.Input.endFrame();
 
-        if (game.state === 'levelUp') { game.chooseUpgrade(0); }
-        else if (game.state === 'waveClear') { game.leaveWaveClear(); }
-        else if (game.state === 'shop') {
-            for (let i = 0; i < 4; i++) { game.purchase(i); }
-            if (game.player.hp < game.player.maxHp) { game.shopHeal(); }
-            game.nextWave();
-            if (game.state === 'victory') { game.keepGoing(); }
-        } else if (game.state === 'gameover') {
+        if (dgame.state === 'levelUp') { dgame.chooseUpgrade(0); }
+        else if (dgame.state === 'waveClear') { dgame.leaveWaveClear(); }
+        else if (dgame.state === 'shop') {
+            for (let i = 0; i < 4; i++) { dgame.purchase(i); }
+            if (dgame.player.hp < dgame.player.maxHp) { dgame.shopHeal(); }
+            dgame.nextWave();
+            if (dgame.state === 'victory') { dgame.keepGoing(); }
+        } else if (dgame.state === 'gameover') {
             deepDeaths++;
-            const reached = game.wave;
-            game.retry();
-            game.player.gold = 5000;
-            game.wave = reached;
-            game.startWave(reached);
+            const reached = dgame.wave;
+            dgame.retry();
+            dgame.player.gold = 5000;
+            dgame.wave = reached;
+            dgame.startWave(reached);
             if (deepDeaths > 8) { break; }
         }
     }
-    console.log('  reached wave ' + game.wave + ' (level ' + game.player.level +
-        ', items ' + game.player.items.length + ', perks ' + game.player.perks.length +
-        ', hp ' + Math.round(game.player.hp) + '/' + Math.round(game.player.maxHp) + ')');
-    check(game.wave >= 12, 'a funded run gets deep into the campaign', game.wave);
-    check(isFinite(game.player.x + game.player.y + game.player.hp + game.player.gold), 'no NaN after a long run');
-    check(game.enemies.every((e) => isFinite(e.x + e.y + e.hp)), 'no NaN enemy state');
-    check(game.projectiles.every((p) => isFinite(p.x + p.y)), 'no NaN projectile state');
-    check(game.pickups.every((p) => isFinite(p.x + p.y)), 'no NaN pickup state');
-    check(game.player.items.length > 2, 'the funded run accumulated items', game.player.items.length);
+    console.log('  reached wave ' + dgame.wave + ' (level ' + dgame.player.level +
+        ', items ' + dgame.player.items.length + ', perks ' + dgame.player.perks.length +
+        ', hp ' + Math.round(dgame.player.hp) + '/' + Math.round(dgame.player.maxHp) + ')');
+    check(dgame.wave >= 12, 'a funded run gets deep into the campaign', dgame.wave);
+    check(isFinite(dgame.player.x + dgame.player.y + dgame.player.hp + dgame.player.gold), 'no NaN after a long run');
+    check(dgame.enemies.every((e) => isFinite(e.x + e.y + e.hp)), 'no NaN enemy state');
+    check(dgame.projectiles.every((q) => isFinite(q.x + q.y)), 'no NaN projectile state');
+    check(dgame.pickups.every((q) => isFinite(q.x + q.y)), 'no NaN pickup state');
+    check(dgame.player.items.length > 2, 'the funded run accumulated items', dgame.player.items.length);
 
     /* victory path */
     console.log('\n== campaign victory path ==');

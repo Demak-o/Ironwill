@@ -191,7 +191,7 @@
             lines.push(names.join(' and ') + ' enemies have entered the arena - tougher, better armoured, richer.');
         }
         if (wave === 1) {
-            lines.push('Your weapon attacks automatically. Left Shift uses your class ability.');
+            lines.push('Aim with your mouse and hold Left Click to attack. Left Shift uses your class ability.');
         } else if (wave === 2) {
             lines.push('Hold the arena for ' + Math.round(IW.waveConfig(wave).duration) + ' seconds; gold flies to you when you are close.');
         } else if (wave === FINAL_WAVE && !this.endless) {

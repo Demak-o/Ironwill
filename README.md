@@ -77,7 +77,9 @@ Dying ends the run. The title screen remembers your best wave.
 
 | Input | Action |
 | --- | --- |
-| `W` `A` `S` `D` / arrows | Move *(attacks fire automatically at the nearest enemy in range)* |
+| **Mouse** | Aim where you attack (cursor follows your aim) |
+| **`Left Click` (hold)** | Attack toward the cursor |
+| `W` `A` `S` `D` / arrows | Move |
 | `Left Shift` / `Space` | Class ability |
 | `1` – `4` | Pick a class |
 | `R` | Reroll the shop |

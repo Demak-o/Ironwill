@@ -1,7 +1,7 @@
 /* Ironwill - the four playable classes (all taken from the blue unit set).
  *
- * Every class shares the same controls: WASD to move, auto-attack at the nearest
- * enemy in range, and Left Shift / Space for its unique ability.
+ * Every class shares the same controls: WASD to move, aim with the mouse and hold
+ * Left Click to attack, and Left Shift / Space for its unique ability.
  */
 (function () {
     'use strict';
