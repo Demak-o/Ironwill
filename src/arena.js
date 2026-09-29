@@ -52,6 +52,7 @@
         this.decor = [];
         this.rocks = [];
         this.foam = [];
+        this.ducks = [];
         this.canvas = null;
         this.build(rng);
     }
@@ -62,6 +63,7 @@
         this.decor.length = 0;
         this.rocks.length = 0;
         this.foam.length = 0;
+        this.ducks.length = 0;
 
         if (typeof document !== 'undefined' && document.createElement) {
             this.canvas = document.createElement('canvas');
@@ -134,6 +136,17 @@
             this.rocks.push({ key: rk, frame: Math.floor(this.rng() * A.frames(rk)), x: rx, y: ry, scale: U.rand(this.rng, 0.7, 1.1) });
         }
 
+        /* swimming rubber ducks - these belong on the water, not the grass field */
+        for (var dk = 0; dk < 2; dk++) {
+            var dside = Math.floor(this.rng() * 4);
+            var dx, dy;
+            if (dside === 0) { dx = U.rand(this.rng, 60, wW - 80); dy = U.rand(this.rng, 16, INSET - 34); }
+            else if (dside === 1) { dx = U.rand(this.rng, 60, wW - 80); dy = U.rand(this.rng, wH - INSET + 14, wH - 30); }
+            else if (dside === 2) { dx = U.rand(this.rng, 16, INSET - 34); dy = U.rand(this.rng, 60, wH - 80); }
+            else { dx = U.rand(this.rng, wW - INSET + 14, wW - 30); dy = U.rand(this.rng, 60, wH - 80); }
+            this.ducks.push({ x: dx, y: dy, flip: this.rng() < 0.5, scale: U.rand(this.rng, 0.85, 1.1) });
+        }
+
         /* shoreline: dark lip + light foam line around the playable rect */
         ctx.save();
         ctx.strokeStyle = 'rgba(12,32,30,0.55)';
@@ -177,20 +190,26 @@
         return frac != null ? frac : 0.2;
     };
 
+    /* Placeholder clearance radius for each decor kind (half a canopy/footprint),
+     * so tall foliage no longer buries its neighbours' art the way a flat 92 px
+     * gap did (which let a tree's canopy be half-covered by the asset in front). */
+    var RAD = { tree: 135, bush: 60, rock: 55, stump: 100, sheep: 42 };
+
     Arena.prototype.placeDecor = function (rng) {
         var self = this;
         var cx = this.x + this.w / 2, cy = this.y + this.h / 2;
-        var minGap = 92;
 
-        function spot(minClear) {
+        function spot(minClear, rad) {
             var i, j;
+            rad = rad || 60;
             for (i = 0; i < 60; i++) {
                 var px = U.rand(rng, self.x + 72, self.x + self.w - 72);
                 var py = U.rand(rng, self.y + 72, self.y + self.h - 72);
                 if (U.dist(px, py, cx, cy) < minClear) { continue; }
                 var ok = true;
                 for (j = 0; j < self.decor.length; j++) {
-                    if (U.dist(px, py, self.decor[j].x, self.decor[j].y) < minGap) { ok = false; break; }
+                    var other = self.decor[j];
+                    if (U.dist(px, py, other.x, other.y) < (other.rad || 60) + rad) { ok = false; break; }
                 }
                 if (ok) { return { x: px, y: py }; }
             }
@@ -204,27 +223,25 @@
 
         var i, p;
         for (i = 0; i < 5; i++) {
-            p = spot(330);
-            this.decor.push({ kind: 'tree', key: 'tree' + U.randInt(rng, 1, 4), frame: U.randInt(rng, 0, 5), x: p.x, y: p.y, scale: U.rand(rng, 0.7, 0.95) });
+            p = spot(330, RAD.tree);
+            this.decor.push({ kind: 'tree', key: 'tree' + U.randInt(rng, 1, 4), frame: U.randInt(rng, 0, 5), x: p.x, y: p.y, scale: U.rand(rng, 0.7, 0.95), rad: RAD.tree });
         }
         for (i = 0; i < 9; i++) {
-            p = spot(250);
-            this.decor.push({ kind: 'bush', key: 'bush' + U.randInt(rng, 1, 4), frame: U.randInt(rng, 0, 7), x: p.x, y: p.y, scale: U.rand(rng, 0.7, 1.1) });
+            p = spot(250, RAD.bush);
+            this.decor.push({ kind: 'bush', key: 'bush' + U.randInt(rng, 1, 4), frame: U.randInt(rng, 0, 7), x: p.x, y: p.y, scale: U.rand(rng, 0.7, 1.1), rad: RAD.bush });
         }
         for (i = 0; i < 8; i++) {
-            p = spot(210);
-            this.decor.push({ kind: 'rock', key: 'rock' + U.randInt(rng, 1, 4), frame: 0, x: p.x, y: p.y, scale: U.rand(rng, 1.0, 1.7) });
+            p = spot(210, RAD.rock);
+            this.decor.push({ kind: 'rock', key: 'rock' + U.randInt(rng, 1, 4), frame: 0, x: p.x, y: p.y, scale: U.rand(rng, 1.0, 1.7), rad: RAD.rock });
         }
         for (i = 0; i < 3; i++) {
-            p = spot(250);
-            this.decor.push({ kind: 'stump', key: 'stump' + U.randInt(rng, 1, 4), frame: 0, x: p.x, y: p.y, scale: U.rand(rng, 0.85, 1.1) });
+            p = spot(250, RAD.stump);
+            this.decor.push({ kind: 'stump', key: 'stump' + U.randInt(rng, 1, 4), frame: 0, x: p.x, y: p.y, scale: U.rand(rng, 0.85, 1.1), rad: RAD.stump });
         }
         for (i = 0; i < 2; i++) {
-            p = spot(280);
-            this.decor.push({ kind: 'sheep', key: 'sheep', frame: 0, x: p.x, y: p.y, scale: 1.0, fps: 5 });
+            p = spot(280, RAD.sheep);
+            this.decor.push({ kind: 'sheep', key: 'sheep', frame: 0, x: p.x, y: p.y, scale: 1.0, fps: 5, rad: RAD.sheep });
         }
-        p = spot(320);
-        this.decor.push({ kind: 'duck', key: 'duck', frame: 0, x: p.x, y: p.y, scale: 1.0, fps: 5 });
     };
 
     /* Draw the water/foam framing that sits behind everything. */
@@ -239,6 +256,14 @@
             f = this.foam[i];
             var frame = Math.floor(time * 7 + i * 2.3) % frames;
             A.draw(ctx, 'foam', frame, f.x - camX, f.y - camY, 0.55, f.flip, 0.32);
+        }
+        /* swimming ducks bob gently on the water */
+        var dFrames = A.frames('duck');
+        for (i = 0; i < this.ducks.length; i++) {
+            f = this.ducks[i];
+            var dFrame = Math.floor(time * 5 + i * 1.7) % dFrames;
+            var bob = Math.sin(time * 3 + i * 2.0) * 1.6;
+            A.draw(ctx, 'duck', dFrame, f.x - camX, f.y - camY + bob, f.scale, f.flip, 1);
         }
     };
 

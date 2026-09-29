@@ -336,6 +336,9 @@ console.log('\n== four simulated runs (one per class) ==');
 /* ---------------------------------------- deep run + late-game behaviour */
 
     console.log('\n== deep run (a funded build pushing into the late waves) ==');
+    /* The Game seeds its RNG from wall-clock time, which makes this funded deep run
+     * flaky. Pin a fixed seed here so the regression check is reproducible. */
+    game.rng = IW.util.makeRng(1337);
     game.startRun(0);
     game.player.gold = 5000;
     let deepGuard = 0, deepDeaths = 0;

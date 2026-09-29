@@ -1,0 +1,14 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# dev scratch (not part of the game)
+tools/_inspect/
+tools/_probe*.js
+
+# editors
+.vscode/
+.idea/
+
+# node
+node_modules/
