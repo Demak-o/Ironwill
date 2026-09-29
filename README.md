@@ -21,7 +21,9 @@
 
 ## 🎮 Play it now
 
-Ironwill is **100% open-source, dependency-free, and runs straight in the browser** — no install, no build tools, no backend. Just serve the folder over HTTP and open the page:
+**▶ Play online:** <strong><a href="https://demak-o.github.io/Ironwill/">demak-o.github.io/Ironwill</a></strong> — hosted on GitHub Pages, no install needed.
+
+Ironwill is **100% open-source, dependency-free, and runs straight in the browser** — no install, no build tools, no backend. To run it locally, just serve the folder over HTTP and open the page:
 
 ```bash
 python -m http.server 8080      # or: npx serve .
