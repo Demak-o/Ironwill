@@ -283,7 +283,17 @@
             var b = buf.ctx;
             b.clearRect(0, 0, buf.c.width, buf.c.height);
             var f = ((frame % d.frames) + d.frames) % d.frames;
-            b.drawImage(d.img, f * d.fw, 0, d.fw, d.fh, 0, 0, w, h);
+            if (flip) {
+                /* Mirror the frame into the buffer so a tinted sprite keeps the caller's
+                 * facing; otherwise a left-facing character got a right-facing ghost on top. */
+                b.save();
+                b.translate(w, 0);
+                b.scale(-1, 1);
+                b.drawImage(d.img, f * d.fw, 0, d.fw, d.fh, 0, 0, w, h);
+                b.restore();
+            } else {
+                b.drawImage(d.img, f * d.fw, 0, d.fw, d.fh, 0, 0, w, h);
+            }
             b.globalCompositeOperation = 'source-atop';
             b.globalAlpha = alpha == null ? 0.5 : alpha;
             b.fillStyle = colour || '#ffffff';

@@ -98,9 +98,9 @@ All four come from the **blue** unit set. Every class has a distinct weapon *and
 | Class | Sprite | Weapon | Ability |
 | --- | --- | --- | --- |
 | **Knight** | `Blue/Warrior` | *Longsword* — a wide melee arc that sweeps everything in front and knocks it back | **Aegis Stance** — brief invulnerability plus a shockwave that hurls attackers away |
-| **Archer** | `Blue/Archer` | *Hunting Bow* — fast projectiles that track the nearest enemy | **Windstep Dash** — a short dash that ignores all damage while you travel |
+| **Archer** | `Blue/Archer` | *Hunting Bow* — fast projectiles that fly toward your aim | **Windstep Dash** — a short dash that ignores all damage while you travel |
 | **Lancer** | `Blue/Lancer` | *Boar Spear* — a narrow thrust that skewers a whole line | **Brace & Riposte** — take 65% less damage while braced, then empower your next thrust |
-| **Monk** | `Blue/Monk` | *Sanctified Wave* — a radial pulse that damages everything around you | **Mend Wounds** — channel to restore 35% of max health |
+| **Monk** | `Blue/Monk` | *Sanctified Wave* — a burst of holy light at your aim point (within a 300 px cast range) | **Mend Wounds** — channel to restore 35% of max health |
 
 Base stats differ per class — the Knight is a 130 HP tank with 3 armor, the Archer is an 88 HP glass cannon with 5% dodge, and so on. Each class also opens with a small bonus to its own damage type (melee / ranged / damage).
 

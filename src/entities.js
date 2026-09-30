@@ -598,22 +598,36 @@
             IW.Audio.play(w.sfx);
 
         } else if (w.kind === 'pulse') {
+            /* Ground-targeted holy nova: the blast lands where the cursor points,
+             * clamped to a max cast range around the player. Cursor past the range
+             * lands the blast at the clip edge, so you can still fire at a far aim. */
+            var inp = IW.Input;
+            var twx = inp.mouse.x + g.camera.x;
+            var twy = inp.mouse.y + g.camera.y;
+            var cRange = w.castRange || 300;
+            var dxx = twx - this.x, dyy = twy - this.y;
+            var dc = Math.sqrt(dxx * dxx + dyy * dyy);
+            var px = this.x, py = this.y;
+            if (dc > 0.001) {
+                var cl = Math.min(dc, cRange);
+                px = this.x + dxx / dc * cl;
+                py = this.y + dyy / dc * cl;
+            }
             for (i = 0; i < g.enemies.length; i++) {
                 e = g.enemies[i];
                 if (e.dead || e.spawnTime > 0) { continue; }
-                var d = U.dist(this.x, this.y, e.x, e.y);
-                if (d > w.radius + e.radius) { continue; }
-                var pa = Math.atan2(e.y - this.y, e.x - this.x);
+                if (U.dist(px, py, e.x, e.y) > w.radius + e.radius) { continue; }
+                var pa = Math.atan2(e.y - py, e.x - px);
                 g.damageEnemy(e, dmg, {
                     crit: crit, knockback: w.knockback,
                     dirX: Math.cos(pa), dirY: Math.sin(pa), source: 'player'
                 });
             }
             g.spawnEffect({
-                kind: 'anim', key: w.effect, x: this.x, y: this.y,
+                kind: 'anim', key: w.effect, x: px, y: py,
                 scale: (w.radius * 2) / 192, fps: w.fps, life: 0.5
             });
-            g.spawnEffect({ kind: 'ring', x: this.x, y: this.y, radius0: 12, radius1: w.radius, colour: '#ffe9a8', life: 0.3 });
+            g.spawnEffect({ kind: 'ring', x: px, y: py, radius0: 12, radius1: w.radius, colour: '#ffe9a8', life: 0.3 });
             this.attackSheet = w.anim;
             this.attackHold = A.frames(w.anim) / 9;
             IW.Audio.play(w.sfx);

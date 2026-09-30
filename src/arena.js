@@ -224,7 +224,16 @@
         var i, p;
         for (i = 0; i < 5; i++) {
             p = spot(330, RAD.tree);
-            this.decor.push({ kind: 'tree', key: 'tree' + U.randInt(rng, 1, 4), frame: U.randInt(rng, 0, 5), x: p.x, y: p.y, scale: U.rand(rng, 0.7, 0.95), rad: RAD.tree });
+            var tkey = 'tree' + U.randInt(rng, 1, 4);
+            /* The tall 256 px trees (tree1/tree2) have 6-frame sway sheets whose 1,2,4,5
+             * frames are motion-smear transitions that draw a stray second crown on the
+             * left - frozen as a static decor frame they read as a broken "half tree".
+             * Only frames 0 and 3 are clean single-crown poses; the small 192 px trees
+             * (tree3/tree4) are a single clean crown on every frame so they can use all 8. */
+            var tframe = (tkey === 'tree1' || tkey === 'tree2')
+                ? [0, 3][U.randInt(rng, 0, 1)]
+                : U.randInt(rng, 0, 7);
+            this.decor.push({ kind: 'tree', key: tkey, frame: tframe, x: p.x, y: p.y, scale: U.rand(rng, 0.7, 0.95), rad: RAD.tree });
         }
         for (i = 0; i < 9; i++) {
             p = spot(250, RAD.bush);
