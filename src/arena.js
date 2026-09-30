@@ -233,7 +233,12 @@
             var tframe = (tkey === 'tree1' || tkey === 'tree2')
                 ? [0, 3][U.randInt(rng, 0, 1)]
                 : U.randInt(rng, 0, 7);
-            this.decor.push({ kind: 'tree', key: tkey, frame: tframe, x: p.x, y: p.y, scale: U.rand(rng, 0.7, 0.95), rad: RAD.tree });
+            /* The tall sway sheets bleed the start of the next pose into each frame's
+             * right edge (~x 238-255) - that leftover crown renders as a stray
+             * 'half tree' next to the real one. trim lets drawDecor crop it away
+             * (the main crown never reaches beyond x ~152). */
+            var ttrim = (tkey === 'tree1' || tkey === 'tree2') ? 224 : 0;
+            this.decor.push({ kind: 'tree', key: tkey, frame: tframe, trim: ttrim, x: p.x, y: p.y, scale: U.rand(rng, 0.7, 0.95), rad: RAD.tree });
         }
         for (i = 0; i < 9; i++) {
             p = spot(250, RAD.bush);

@@ -894,7 +894,15 @@ Game.prototype.updateInput = function () {
         var fs = A.frameSize(dec.key);
         var base = IW.decorBase(dec.key);
         var drawY = (dec.y - camY) - fs.fh * dec.scale * base;
-        A.draw(ctx, dec.key, frame, dec.x - camX, drawY, dec.scale, false, 1);
+        if (dec.trim) {
+            /* Crop the stray sway bleed (see placeDecor): render only the left trim
+             * width of the frame, centred on the placement point like a full frame. */
+            var tw = dec.trim, dw = tw * dec.scale, dh = fs.fh * dec.scale;
+            A.drawRegion(ctx, dec.key, (frame % frames) * fs.fw, 0, tw, fs.fh,
+                (dec.x - camX) - dw / 2, drawY - dh / 2, dw, dh, 1);
+        } else {
+            A.draw(ctx, dec.key, frame, dec.x - camX, drawY, dec.scale, false, 1);
+        }
     };
 
     Game.prototype.loop = function () {
