@@ -257,23 +257,31 @@
             UI.text(ctx, 'LVL ' + p.level, 20 + barW * 0.78 + 8, 78, { size: 14, bold: true, colour: COL.gold, outline: 3 });
             UI.text(ctx, 'XP ' + Math.floor(p.xp) + '/' + p.xpNext, barW * 0.78 - 30, 78, { size: 11, align: 'right', colour: COL.dim, outline: 2 });
 
-            /* wave + timer */
+            /* wave + timer (or endless run clock) */
             var centreX = VIEW_W / 2;
-            var timeLeft = Math.max(0, game.waveTime);
             UI.panel(ctx, centreX - 176, 12, 352, 62, { fill: 'rgba(14,16,20,0.85)', accent: 'rgba(255,212,94,0.5)' });
-            UI.text(ctx, 'WAVE ' + game.wave, centreX - 168, 36, { size: 19, bold: true, colour: COL.gold, outline: 3 });
-            UI.text(ctx, game.biome.name.toUpperCase(), centreX + 168, 36, { size: 12, align: 'right', colour: COL.dim, outline: 2 });
-            UI.bar(ctx, centreX - 168, 44, 336, 16, game.waveDuration > 0 ? timeLeft / game.waveDuration : 0, '#e8c04a', { gloss: true });
-            UI.text(ctx, U.formatTime(timeLeft), centreX - 164, 57, { size: 11, colour: '#4a3a12' });
-            UI.text(ctx, 'ENEMIES ' + game.livingEnemies(), centreX + 164, 57, { size: 11, align: 'right', colour: '#4a3a12' });
+            if (game.endless) {
+                UI.text(ctx, 'ENDLESS', centreX - 168, 36, { size: 19, bold: true, colour: COL.gold, outline: 3 });
+                UI.text(ctx, game.biome.name.toUpperCase(), centreX + 168, 36, { size: 12, align: 'right', colour: COL.dim, outline: 2 });
+                UI.text(ctx, 'DIFF x' + game.endlessEsc().toFixed(2) + '   ' + U.formatTime(game.endlessTime),
+                    centreX - 164, 57, { size: 11, colour: '#4a3a12' });
+                UI.text(ctx, 'ENEMIES ' + game.livingEnemies(), centreX + 164, 57, { size: 11, align: 'right', colour: '#4a3a12' });
+            } else {
+                var timeLeft = Math.max(0, game.waveTime);
+                UI.text(ctx, 'WAVE ' + game.wave, centreX - 168, 36, { size: 19, bold: true, colour: COL.gold, outline: 3 });
+                UI.text(ctx, game.biome.name.toUpperCase(), centreX + 168, 36, { size: 12, align: 'right', colour: COL.dim, outline: 2 });
+                UI.bar(ctx, centreX - 168, 44, 336, 16, game.waveDuration > 0 ? timeLeft / game.waveDuration : 0, '#e8c04a', { gloss: true });
+                UI.text(ctx, U.formatTime(timeLeft), centreX - 164, 57, { size: 11, colour: '#4a3a12' });
+                UI.text(ctx, 'ENEMIES ' + game.livingEnemies(), centreX + 164, 57, { size: 11, align: 'right', colour: '#4a3a12' });
+            }
 
-            /* gold + kills */
+            /* gold + kills + score */
             UI.panel(ctx, VIEW_W - 200, 12, 188, 92, { fill: 'rgba(14,16,20,0.85)', accent: 'rgba(255,212,94,0.4)' });
             A.draw(ctx, 'gold', 0, VIEW_W - 178, 38, 0.42, false, 1);
             UI.text(ctx, '' + Math.floor(p.gold), VIEW_W - 152, 48, { size: 22, bold: true, colour: COL.gold, outline: 3 });
             UI.text(ctx, 'GOLD', VIEW_W - 152, 64, { size: 10, colour: COL.faint });
             UI.text(ctx, 'KILLS ' + p.kills, VIEW_W - 188, 82, { size: 12, colour: COL.dim, outline: 2 });
-            UI.text(ctx, 'BEST W' + game.bestWave, VIEW_W - 188, 97, { size: 12, colour: COL.dim, outline: 2 });
+            UI.text(ctx, 'SCORE ' + game.calcScore(), VIEW_W - 188, 97, { size: 12, bold: true, colour: '#7fd0ff', outline: 2 });
 
             /* ability button + cooldown */
             var ab = p.char.ability;
@@ -701,7 +709,9 @@
             UI.backdrop(ctx, 0.72);
             UI.panel(ctx, VIEW_W / 2 - 320, 150, 640, 470, { fill: 'rgba(18,20,24,0.96)', accent: 'rgba(255,212,94,0.6)' });
             UI.text(ctx, 'PAUSED', VIEW_W / 2, 220, { size: 42, bold: true, align: 'center', colour: COL.gold, outline: 7 });
-            UI.text(ctx, 'Wave ' + game.wave + ' - ' + U.formatTime(Math.max(0, game.waveTime)) + ' left on the clock',
+            UI.text(ctx, game.endless
+                    ? ('Endless wave ' + U.formatTime(game.endlessTime) + ' survived - difficulty x' + game.endlessEsc().toFixed(1))
+                    : ('Wave ' + game.wave + ' - ' + U.formatTime(Math.max(0, game.waveTime)) + ' left on the clock'),
                 VIEW_W / 2, 252, { size: 14, align: 'center', colour: COL.dim, outline: 3 });
 
             var lines = [
@@ -736,8 +746,8 @@
                 { size: 14, align: 'center', colour: COL.dim, outline: 3 });
 
             var rows = [
-                ['Waves survived', '' + Math.max(0, game.wave - 1)],
-                ['Reached wave', '' + game.wave],
+                ['Waves survived', '' + Math.max(0, game.effWave() - 1)],
+                ['Reached wave', '' + game.effWave()],
                 ['Level', '' + p.level],
                 ['Enemies slain', '' + p.kills],
                 ['Gold earned', '' + game.goldEarned],
@@ -745,7 +755,7 @@
                 ['Damage dealt', '' + Math.round(p.damageDealt)],
                 ['Damage taken', '' + Math.round(p.damageTaken)],
                 ['Difficulty', game.diffMul().name],
-                ['SCORE', '' + game.saveLeaderboard()[0].score],
+                ['SCORE', '' + game.calcScore()],
                 ['Best wave ever', '' + game.bestWave]
             ];
             for (var i = 0; i < rows.length; i++) {
@@ -785,7 +795,7 @@ victoryLayout: function () {
                 ['Items owned', '' + p.items.length],
                 ['Damage dealt', '' + Math.round(p.damageDealt)],
                 ['Difficulty', game.diffMul().name],
-                ['SCORE', '' + game.saveLeaderboard()[0].score]
+                ['SCORE', '' + game.calcScore()]
             ];
             for (var i = 0; i < rows.length; i++) {
                 var y = 278 + i * 32;
@@ -807,7 +817,7 @@ victoryLayout: function () {
             ctx.globalAlpha = U.clamp(game.introTimer, 0, 1);
             var w = 640, h = 52 + texts.length * 20;
             UI.panel(ctx, VIEW_W / 2 - w / 2, 96, w, h, { fill: 'rgba(12,14,18,0.85)', edge: COL.gold, accent: 'rgba(255,212,94,0.6)' });
-            UI.text(ctx, 'WAVE ' + game.wave + ' - ' + game.biome.name.toUpperCase(), VIEW_W / 2, 124,
+            UI.text(ctx, (game.endless ? 'ENDLESS' : 'WAVE ' + game.wave) + ' - ' + game.biome.name.toUpperCase(), VIEW_W / 2, 124,
                 { size: 20, bold: true, align: 'center', colour: COL.gold, outline: 4 });
             for (var i = 0; i < texts.length; i++) {
                 UI.text(ctx, texts[i], VIEW_W / 2, 148 + i * 20, { size: 13, align: 'center', colour: COL.dim, outline: 3 });

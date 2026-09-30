@@ -57,6 +57,11 @@
         this.arena = null;
         this.biome = IW.biomeForWave(1);
         this.difficulty = 1;     /* 1=Normal, 2=Medium, 3=Hard */
+        /* score model: survival points accrue over time in combat + a chunk per kill;
+         * calcScore() folds in the difficulty multiplier for the leaderboard. */
+        this.survivalPts = 0;
+        this.killPts = 0;
+        this.endlessTime = 0;
         this.score = 0;
     }
 
@@ -73,8 +78,9 @@
     }
 
     Game.prototype.saveBest = function () {
-        if (this.wave <= this.bestWave) { return; }
-        this.bestWave = this.wave;
+        var depth = this.effWave();
+        if (depth <= this.bestWave) { return; }
+        this.bestWave = depth;
         try {
             if (window.localStorage) { window.localStorage.setItem('ironwill.bestWave', '' + this.bestWave); }
         } catch (e) { /* ignore */ }
@@ -91,9 +97,26 @@
         return (IW.DIFFICULTIES[this.difficulty - 1] || IW.DIFFICULTIES[0]);
     };
 
+    /* Effective depth: in the 20-wave campaign this is just the wave number; in
+     * endless mode the single long wave keeps climbing virtually every minute so
+     * the record, survival pacing and intro all keep making sense. */
+    Game.prototype.effWave = function () {
+        if (!this.endless) { return this.wave; }
+        return this.wave + Math.floor(this.endlessTime / 60);
+    };
+
+    /* Endless difficulty escalation - a slowly-rising multiplier on enemy bulk.
+     * ~ +9% HP per minute, gentler on damage so it stays winnable for a while. */
+    Game.prototype.endlessEsc = function () {
+        var mins = this.endlessTime / 60;
+        return Math.max(1, 1 + 0.09 * mins);
+    };
+
+    /* Score = survival time (which ramps up the deeper you go) + kill bonuses,
+     * all scaled by the chosen difficulty of the run. */
     Game.prototype.calcScore = function () {
         var diff = this.diffMul();
-        return Math.round(this.wave * 25 + this.goldEarned * 0.5 + this.player.kills * 3) * diff.scoreMul;
+        return Math.round((this.survivalPts + this.killPts) * diff.scoreMul);
     };
 
     /* ------------------------------------------------------------- leaderboard */
@@ -114,7 +137,7 @@
         var board = loadLeaderboard();
         var entry = {
             score: Math.round(this.calcScore()),
-            wave: this.wave,
+            wave: this.effWave(),
             char: this.char ? this.char.name : 'Unknown',
             diff: this.diffMul().name,
             date: Date.now ? Date.now() : 0
@@ -149,6 +172,10 @@
         this.texts.length = 0;
         this.goldEarned = 0;
         this.endless = false;
+        this.endlessTime = 0;
+        this.survivalPts = 0;
+        this.killPts = 0;
+        this.score = 0;
         this.wave = 0;
         this.spawned = 0;
         this.upgradeChoices = [];
@@ -175,6 +202,11 @@
         if (biomeChanged) { this.newArena(wave); }
         /* slight heal between waves keeps long runs honest without free full heals */
         if (this.player) { this.player.heal(this.player.maxHp * 0.05); }
+        /* open the wave with a fighting chance already mid-arena, no dead air */
+        var seed = Math.max(3, Math.round(cfg.liveStart * 0.6));
+        for (var sIdx = 0; sIdx < seed && this.livingEnemies() < cfg.liveStart; sIdx++) {
+            this.spawnEnemy();
+        }
         this.state = 'wave';
         this.introTimer = 3.2;
         this.introLines = this.introText(wave);
@@ -184,6 +216,10 @@
     Game.prototype.introText = function (wave) {
         var lines = [];
         var names = [];
+        if (this.endless) {
+            lines.push('ENDLESS - the horde has no end. Survive, keep your head, break your score.');
+            return lines;
+        }
         for (var t = 1; t <= 4; t++) {
             if (IW.tierUnlockWave(t) === wave) { names.push(IW.tierById(t).name); }
         }
@@ -195,11 +231,11 @@
         } else if (wave === 2) {
             lines.push('Hold the arena for ' + Math.round(IW.waveConfig(wave).duration) + ' seconds; gold flies to you when you are close.');
         } else if (wave === FINAL_WAVE && !this.endless) {
-            lines.push('Final wave of the campaign. Survive it and the horde breaks.');
+            lines.push('Final wave of the campaign. Survive it and you can push into ENDLESS.');
         } else if (wave % 3 === 0) {
             lines.push('Elite champions are more common from here on.');
         }
-        if (!lines.length) { lines.push('The horde returns, ' + Math.round(this.waveCfg.cap) + ' at a time.'); }
+        if (!lines.length) { lines.push('The horde is endless tonight - survive the timer to advance.'); }
         return lines;
     };
 
@@ -231,11 +267,14 @@
             tierId: tier, typeId: type, wave: this.wave, elite: elite, x: p.x, y: p.y
         });
         this.enemies.push(e);
-        /* difficulty stat scaling */
+        /* difficulty stat scaling - the run difficulty multiplier, plus the endless
+         * escalation that slowly inflates enemy bulk the longer you survive. */
         var diffMul = this.diffMul().enemyMul;
-        if (diffMul > 1) {
-            e.stats.hp = Math.round(e.stats.hp * diffMul);
-            e.stats.damage = Math.round(e.stats.damage * diffMul);
+        var esc = this.endless ? this.endlessEsc() : 1;
+        var dmgEsc = this.endless ? (1 + 0.045 * (this.endlessTime / 60)) : 1;
+        if (esc > 1 || dmgEsc > 1 || diffMul > 1) {
+            e.stats.hp = Math.round(e.stats.hp * esc * diffMul);
+            e.stats.damage = Math.round(e.stats.damage * dmgEsc * diffMul);
             e.maxHp = e.stats.hp;
         }
         this.spawnEffect({
@@ -293,6 +332,8 @@
     Game.prototype.killEnemy = function (e) {
         var p = this.player;
         this.waveKills++;
+        /* leaderboard kill bonus - scales with the tier colour, elites and depth */
+        this.killPts += IW.enemyScore(e.tierId, e.typeId, e.elite, this.wave);
         if (p) {
             p.kills++;
             p.gainXp(e.stats.xp);
@@ -311,6 +352,8 @@
     Game.prototype.onPlayerDeath = function () {
         if (this.state === 'gameover') { return; }
         this.state = 'gameover';
+        this.saveBest();
+        this.saveLeaderboard();
         var p = this.player;
         this.spawnEffect({ kind: 'anim', key: 'explosion2', x: p.x, y: p.y, scale: 1.3, fps: 16, life: 0.9 });
         this.spawnEffect({ kind: 'ring', x: p.x, y: p.y, radius0: 10, radius1: 120, colour: '#e05a4a', life: 0.8, lineWidth: 8 });
@@ -371,19 +414,37 @@
         /* countdown */
         this.waveTime -= dt;
 
-        /* spawning — only while the timer is running */
-        if (this.spawned < this.waveCfg.cap && this.waveTime > 0) {
+        /* score: survival points accrue the deeper you go, while combat runs */
+        this.survivalPts += (6 + this.effWave() * 1.2) * dt;
+
+        /* endless is one long continuous wave - track how long we've survived it */
+        if (this.endless) { this.endlessTime += dt; }
+
+        /* continuous spawning - keep the arena populated the WHOLE wave so the player
+         * always has something to kill (no burst-then-lull). The concurrent target
+         * fills in as the wave progresses and holds until the very last second. */
+        var target;
+        if (this.endless) {
+            target = this.waveCfg.livePeak + (this.endlessTime / 60) * 2;
+            target = Math.min(46, target);
+        } else {
+            var progress = Math.min(1, 1 - (this.waveTime / this.waveDuration));
+            target = this.waveCfg.liveStart +
+                (this.waveCfg.livePeak - this.waveCfg.liveStart) * Math.min(1, progress / 0.55);
+        }
+        target = Math.round(target);
+        if (this.waveTime > 0) {
             this.spawnTimer -= dt;
-            if (this.spawnTimer <= 0 && this.livingEnemies() < this.waveCfg.cap) {
-                var group = this.waveCfg.groupSize;
-                if (this.spawned + group > this.waveCfg.cap) { group = this.waveCfg.cap - this.spawned; }
-                for (i = 0; i < group; i++) {
-                    if (this.spawned >= this.waveCfg.cap) { break; }
-                    this.spawnEnemy();
-                    this.spawned++;
-                }
+            if (this.spawnTimer <= 0 && target > 0 && this.livingEnemies() < target) {
+                this.spawnEnemy();
                 this.spawnTimer = this.waveCfg.spawnInterval;
             }
+        }
+
+        /* endless: a level-up interrupts the wave so the player can pick an upgrade,
+         * then the shop pops up, then the wave resumes (no wave will ever end). */
+        if (this.endless && this.player && this.player.pendingLevels > 0) {
+            this.beginLevelUp();
         }
 
         if (this.player) { this.player.update(dt); }
@@ -583,15 +644,31 @@
         if (this.state !== 'shop') { return; }
         if (!this.endless && this.wave >= FINAL_WAVE) {
             this.state = 'victory';
+            this.saveBest();
+            this.saveLeaderboard();
             IW.Audio.play('win');
             return;
         }
+        if (this.endless) { this.continueEndless(); return; }
         this.startWave(this.wave + 1);
     };
 
+    /* entering endless: one continuous, never-ending wave that escalates slowly */
     Game.prototype.keepGoing = function () {
         this.endless = true;
+        this.endlessTime = 0;
         this.startWave(this.wave + 1);
+        this.waveTime = Infinity;
+        this.waveDuration = Infinity;
+    };
+
+    /* resume the endless wave after a level-up shop popup - the wave itself never ends */
+    Game.prototype.continueEndless = function () {
+        if (this.state !== 'shop') { return; }
+        this.state = 'wave';
+        this.waveTime = Infinity;
+        this.waveDuration = Infinity;
+        this.upgradeChoices = [];
     };
 
     Game.prototype.retry = function () {

@@ -24,14 +24,14 @@
     IW.EnemyTypes = {
         pawn: {
             id: 'pawn', type: 'Pawn', name: 'Peasant', ai: 'chase',
-            hp: 14, speed: 84, damage: 6, radius: 15, gold: 1, xp: 1,
+            hp: 14, speed: 84, damage: 6, radius: 15, gold: 1, xp: 1, score: 10,
             contactCd: 0.7, knockbackResist: 0,
             anims: { idle: 'Idle', run: 'Run' },
             weight: function (wave) { return Math.max(10, 62 - wave * 2.2); }
         },
         warrior: {
             id: 'warrior', type: 'Warrior', name: 'Man-at-Arms', ai: 'chase',
-            hp: 46, speed: 60, damage: 13, radius: 19, gold: 2, xp: 2,
+            hp: 46, speed: 60, damage: 13, radius: 19, gold: 2, xp: 2, score: 22,
             contactCd: 0.8, knockbackResist: 0.35,
             windup: 0.38, attackRange: 56, attackCd: 1.7,
             anims: { idle: 'Idle', run: 'Run', attack: 'Attack1' },
@@ -39,7 +39,7 @@
         },
         archer: {
             id: 'archer', type: 'Archer', name: 'Bowman', ai: 'ranged',
-            hp: 24, speed: 74, damage: 9, radius: 16, gold: 2, xp: 2,
+            hp: 24, speed: 74, damage: 9, radius: 16, gold: 2, xp: 2, score: 18,
             contactCd: 1.0, knockbackResist: 0,
             keepDist: 238, shootCd: 2.4, projSpeed: 330, aimTime: 0.45,
             anims: { idle: 'Idle', run: 'Run', shoot: 'Shoot' },
@@ -47,7 +47,7 @@
         },
         lancer: {
             id: 'lancer', type: 'Lancer', name: 'Pikeman', ai: 'charger',
-            hp: 34, speed: 68, damage: 15, radius: 18, gold: 3, xp: 3,
+            hp: 34, speed: 68, damage: 15, radius: 18, gold: 3, xp: 3, score: 26,
             contactCd: 0.9, knockbackResist: 0.2,
             telegraph: 0.6, chargeSpeed: 3.1, chargeTime: 0.35, chargeCd: 3.2, chargeRange: 340,
             anims: { idle: 'Idle', run: 'Run', attack: 'Right_Attack' },
@@ -55,7 +55,7 @@
         },
         monk: {
             id: 'monk', type: 'Monk', name: 'Zealot', ai: 'healer',
-            hp: 30, speed: 78, damage: 4, radius: 16, gold: 3, xp: 3,
+            hp: 30, speed: 78, damage: 4, radius: 16, gold: 3, xp: 3, score: 22,
             contactCd: 1.0, knockbackResist: 0,
             healAmount: 10, healCd: 1.6, healRange: 180, keepDist: 155,
             anims: { idle: 'Idle', run: 'Run', effect: 'Heal_Effect' },
@@ -67,33 +67,49 @@
 
     /* Elites start appearing once the horde has teeth. */
     IW.ELITE = { scale: 1.28, hpMul: 3.0, dmgMul: 1.25, goldMul: 4, xpMul: 3, ring: '#ffd45e' };
+/* Score for landing a kill: a base per archetype, scaled by the tier colour,
+ * a big bump for elites, and a gentle late-wave inflation. */
+IW.enemyScore = function (tierId, typeId, elite, wave) {
+    var type = IW.EnemyTypes[typeId] || IW.EnemyTypes.pawn;
+    var tier = IW.tierById(tierId);
+    var base = type.score != null ? type.score : 10;
+    var tierMul = tier.xpMul;                 /* colour = value: 1 / 1.5 / 2.2 / 3.2 */
+    var eliteMul = elite ? 4 : 1;
+    var waveMul = 1 + Math.max(0, wave - 1) * 0.015;
+    return Math.max(1, Math.round(base * tierMul * eliteMul * waveMul));
+};
 /* ------------------------------------------------------------ wave curve */
 
-    IW.waveConfig = function (wave) {
-        var w = Math.max(1, wave);
-        var duration = Math.min(60, 30 + (w - 1) * 1.5);
-        var spawnInterval = Math.max(0.42, 2.1 - w * 0.09);
-        var groupSize = 1 + Math.floor(w / 3);
-        var cap = Math.min(72, 14 + w * 2);
-        /* Health grows on a gentle quadratic so late waves stay punchy. */
-        var hpMul = 1 + 0.13 * (w - 1) + 0.012 * Math.pow(w - 1, 2);
-        var dmgMul = Math.min(3.2, 1 + 0.085 * (w - 1));
-        var goldMul = 1 + 0.05 * (w - 1);
-        var xpMul = 1 + 0.05 * (w - 1);
-        var eliteChance = w >= 4 ? Math.min(0.18, 0.02 + (w - 4) * 0.012) : 0;
-        return {
-            wave: w,
-            duration: duration,
-            spawnInterval: spawnInterval,
-            groupSize: groupSize,
-            cap: cap,
-            hpMul: hpMul,
-            dmgMul: dmgMul,
-            goldMul: goldMul,
-            xpMul: xpMul,
-            eliteChance: eliteChance
-        };
+IW.waveConfig = function (wave) {
+    var w = Math.max(1, wave);
+    /* Each wave is a timed survival window; the clock grows a little every wave. */
+    var duration = Math.min(70, 28 + (w - 1) * 2.0);
+    /* Spawn cadence never slows as waves get harder. */
+    var spawnInterval = Math.max(0.42, 1.7 - w * 0.045);
+    /* Concurrent-enemy budget we try to keep on screen for the WHOLE wave, so the
+     * arena never goes quiet: liveStart opens the wave, livePeak is the sustained
+     * pressure once it fills in. */
+    var liveStart = Math.min(20, 4 + Math.floor(w * 0.5));
+    var livePeak = Math.min(30, 10 + w);
+    /* Health grows on a gentle quadratic so late waves stay punchy. */
+    var hpMul = 1 + 0.13 * (w - 1) + 0.012 * Math.pow(w - 1, 2);
+    var dmgMul = Math.min(3.2, 1 + 0.085 * (w - 1));
+    var goldMul = 1 + 0.05 * (w - 1);
+    var xpMul = 1 + 0.05 * (w - 1);
+    var eliteChance = w >= 4 ? Math.min(0.18, 0.02 + (w - 4) * 0.012) : 0;
+    return {
+        wave: w,
+        duration: duration,
+        spawnInterval: spawnInterval,
+        liveStart: liveStart,
+        livePeak: livePeak,
+        hpMul: hpMul,
+        dmgMul: dmgMul,
+        goldMul: goldMul,
+        xpMul: xpMul,
+        eliteChance: eliteChance
     };
+};
 
     /* Tier unlock schedule keeps the "colour = threat" promise honest. */
     IW.tierUnlockWave = function (tier) {

@@ -367,7 +367,7 @@ console.log('\n== four simulated runs (one per class) ==');
     dgame.startRun(0);
     dgame.player.gold = 5000;
     let deepGuard = 0, deepDeaths = 0;
-    while (dgame.wave <= 22 && deepGuard++ < 50000) {
+    while (dgame.wave <= 20 && deepGuard++ < 50000) {
         /* a bot that actually plays: run away from the nearest enemy, attack it with
          * the mouse, and use the class ability */
         const p = dgame.player;
@@ -435,6 +435,71 @@ console.log('\n== four simulated runs (one per class) ==');
     game.keepGoing();
     check(game.state === 'wave' && game.wave === waveBeforeEndless + 1, 'endless mode continues past wave 20',
         game.state + ' w' + game.wave);
+
+    /* deterministic check that an endless level-up interrupts for the upgrade + shop
+     * flow, then resumes the SAME endless wave (never re-starts it). */
+    game.player.gainXp(game.player.xpNext * 2);   /* force pending levels */
+    let ig = 0;
+    while (ig++ < 30 && game.state === 'wave') { game.tick(dt); IW.Input.endFrame(); }
+    check(game.state === 'levelUp', 'an endless level-up interrupts the wave', game.state);
+    game.chooseUpgrade(ig % 3);                       /* pick the first upgrade */
+    if (game.state === 'levelUp') { game.chooseUpgrade(ig % 3); }
+    check(game.state === 'shop', 'endless upgrades open the shop', game.state);
+    game.nextWave();
+    check(game.state === 'wave', 'the endless wave resumes after the shop', game.state);
+    check(game.endless === true, 'still in endless after the resume', game.endless);
+
+    /* endless (bounded smoke): one infinite wave, non-stop enemies, escalating diff. */
+    console.log('\n== endless mode (bounded smoke test) ==');
+    /* gear the smoke player like a real wave-20 survivor so it can actually fight */
+    const buildPool = IW.Items.filter((it) => it.rarity >= 3);
+    for (let bi = 0; bi < 8 && bi < buildPool.length; bi++) {
+        game.player.addItem(IW.instantiate(buildPool[bi], 21));
+    }
+    game.player.recompute(true);
+    game.player.gold = 5000;
+    let eg = 0, endlessLv = 0, endlessShops = 0, endlessResumes = 0;
+    let emptyRun = 0, maxEmptyRun = 0, maxLiving = 0;
+    let esc0 = game.endlessEsc();
+    while (eg < 2400 && game.state !== 'gameover') {
+        const p2 = game.player;
+        let n2 = null, b2 = Infinity;
+        for (const e2 of game.enemies) {
+            const d3 = (e2.x - p2.x) * (e2.x - p2.x) + (e2.y - p2.y) * (e2.y - p2.y);
+            if (d3 < b2) { b2 = d3; n2 = e2; }
+        }
+        if (n2) {
+            const dx2 = p2.x - n2.x, dy2 = p2.y - n2.y;
+            IW.Input.keys.KeyD = dx2 > 30; IW.Input.keys.KeyA = dx2 < -30;
+            IW.Input.keys.KeyS = dy2 > 30; IW.Input.keys.KeyW = dy2 < -30;
+            IW.Input.mouse.x = n2.x - game.camera.x;
+            IW.Input.mouse.y = n2.y - game.camera.y;
+            IW.Input.mouse.down = true;
+        } else { IW.Input.mouse.down = false; }
+        game.tick(dt);
+        IW.Input.endFrame();
+        if (game.state === 'levelUp') { endlessLv++; game.chooseUpgrade(eg % 3); }
+        else if (game.state === 'shop') { endlessShops++; game.nextWave(); if (game.state === 'wave') endlessResumes++; }
+        if (game.state === 'wave') {
+            const ln = game.livingEnemies();
+            if (ln <= 0) { emptyRun++; maxEmptyRun = Math.max(maxEmptyRun, emptyRun); }
+            else { emptyRun = 0; }
+            maxLiving = Math.max(maxLiving, ln);
+        }
+        eg++;
+    }
+    const esc1 = game.endlessEsc();
+    console.log('  endless: ' + eg + ' ticks | survived ' + (game.state !== 'gameover') +
+        ' | level-ups ' + endlessLv + ' | shops ' + endlessShops + ' | resumes ' + endlessResumes +
+        ' | longest empty ' + maxEmptyRun + ' frames | peak living ' + maxLiving +
+        ' | diff ' + esc0.toFixed(2) + ' -> ' + esc1.toFixed(2));
+    check(game.endless && game.wave === 21, 'endless stays a single wave 21', game.wave);
+    check(game.endlessTime > 0 && esc1 > esc0, 'endless difficulty escalates with survival time',
+        esc0.toFixed(2) + ' -> ' + esc1.toFixed(2));
+    check(maxEmptyRun <= 20, 'the endless arena never stays empty - spawns keep it stocked', maxEmptyRun);
+    check(esc1 < 1 + 0.09 * (2400 / 60 / 60) + 0.01, 'difficulty ramps slowly (not exponential blow-up)', esc1.toFixed(3));
+    check(isFinite(game.player.x + game.player.y + game.player.hp + game.endlessTime), 'no NaN after endless play');
+    check(game.enemies.every((e2) => isFinite(e2.x + e2.y + e2.hp)), 'no NaN endless enemy');
 
     /* pause + stats panel + mute must not explode */
     console.log('\n== ui edge cases ==');

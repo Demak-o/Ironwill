@@ -65,13 +65,13 @@ Then open **<http://localhost:8080/>**, click the canvas once to give it keyboar
 ## 🕹️ How it plays
 
 1. **Pick a class.** Four options, each a different weapon and a different `Left Shift` ability.
-2. **Clear the wave.** Enemies stream in for the round's duration (20s to 45s). Kill them and they pop **gold** and **XP** — walk near the gold to hoover it up.
+2. **Hold the wave.** Each wave is a timed round (28s early, growing to ~66s by wave 20). Enemies stream in the **whole round** — never a quiet moment — and pop **gold** and **XP** as they fall; walk near the gold to hoover it up.
 3. **Wave clear.** A short summary of kills, gold and time.
 4. **Shop.** Four randomly-rolled items appear. Rerolls cost `8` gold and climb `×1.6 + 2` each time.
 5. **Level up.** Fill the XP bar and pick one of **three boons** (e.g. `+5 Luck`, `+8% Cooldown Reduction`, `+40 Pickup Range`).
 6. **Repeat.** **Wave 20** is the finale — clear it to win the campaign, then push on in **endless mode** for as long as you survive.
 
-Dying ends the run. The title screen remembers your best wave.
+Dying ends the run. Your **score** — survival time plus a bonus per kill (scaled by the enemy's tier colour and whether it was an elite), all multiplied by your chosen difficulty — lands on the on-device **leaderboard**, and the title screen remembers your best wave. In endless the horde escalates forever (a visible `DIFF` multiplier climbs at the top of the HUD): level-ups still open the boon + shop popup, gold drops as usual, and the only question is how high your score climbs before you finally fall.
 
 ### 🎛️ Controls
 
