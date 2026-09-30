@@ -142,10 +142,10 @@ Rarity weights are `base × (1 + LUCK_FACTOR[rarity] × luck)`:
 | Common | 100 | −0.55% |
 | Uncommon | 52 | 0 |
 | Rare | 20 | +3.5% |
-| Epic | 6.5 | +6.0% |
-| Legendary | 1.4 | +9.0% |
+| Epic | 6.0 | +6.0% |
+| Legendary | 1.25 | +9.0% |
 
-At 0 Luck the shop is overwhelmingly Common — a Legendary appears in a given slot only about **1 in 130** rolls. Stack Luck (items like `Lucky Coin` +3, `Fortuna Charm` +6, `Glittering Hoard` +10, `Crown of Avarice` +20, `Duck of Destiny` +12) and Legendary builds become genuinely reachable. There are 40+ items and level-up boons, and shop prices creep up 4% per wave so late gold finds somewhere to go.
+At 0 Luck the shop is overwhelmingly Common — a Legendary appears in a given slot only about **1 in 143** rolls. Stack Luck (items like `Lucky Coin` +3, `Fortuna Charm` +5, `Glittering Hoard` +9, `Crown of Avarice` +18, `Duck of Destiny` +10) and Legendary builds become genuinely reachable. There are 40+ items and level-up boons, and shop prices creep up 4% per wave so late gold finds somewhere to go.
 
 ---
 
