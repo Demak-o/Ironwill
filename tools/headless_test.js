@@ -366,6 +366,13 @@ console.log('\n== four simulated runs (one per class) ==');
     IW.Input.mouse.down = false; IW.Input.mouse.justDown = false; IW.Input.mouse.justUp = false;
     dgame.startRun(0);
     dgame.player.gold = 5000;
+    /* give the funded run a real starting build (the crit fix means a bare class no
+     * longer clears on auto-crits); deterministic pool, matching a strong player. */
+    const deepPool = IW.Items.filter((it) => it.rarity >= 3);
+    for (let di = 0; di < 7 && di < deepPool.length; di++) {
+        dgame.player.addItem(IW.instantiate(deepPool[di], 21));
+    }
+    dgame.player.recompute(true);
     let deepGuard = 0, deepDeaths = 0;
     while (dgame.wave <= 20 && deepGuard++ < 50000) {
         /* a bot that actually plays: run away from the nearest enemy, attack it with

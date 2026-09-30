@@ -26,7 +26,7 @@
             blurb: 'Slow, heavy and impossible to shove aside. Sweeps his blade through everything in front of him.',
             baseSpeed: 158,
             radius: 19,
-            baseStats: S.base({ maxHp: 130, regen: 0.4, armor: 3, dodge: 0, damage: 0, melee: 0.10, attackSpeed: 0, crit: 5, pickup: 130, luck: 0 }),
+            baseStats: S.base({ maxHp: 130, regen: 0.4, armor: 1, dodge: 0, damage: 0, melee: 0.10, attackSpeed: 0, crit: 0.05, pickup: 130, luck: 0 }),
             weapon: {
                 kind: 'arc',
                 name: 'Longsword',
@@ -63,7 +63,7 @@
             blurb: 'Fragile but quick. Picks enemies apart from range and slips out of trouble with a dash.',
             baseSpeed: 176,
             radius: 17,
-            baseStats: S.base({ maxHp: 88, regen: 0.2, armor: 0, dodge: 5, damage: 0, ranged: 0.05, attackSpeed: 0, crit: 8, pickup: 140, luck: 0 }),
+            baseStats: S.base({ maxHp: 88, regen: 0.2, armor: 0, dodge: 0.05, damage: 0, ranged: 0.05, attackSpeed: 0, crit: 0.08, pickup: 140, luck: 0 }),
             weapon: {
                 kind: 'shot',
                 name: 'Hunting Bow',
@@ -100,7 +100,7 @@
             blurb: 'Long reach and a wall of discipline. Skewers whole lines and turns a brace into a counter-attack.',
             baseSpeed: 166,
             radius: 18,
-            baseStats: S.base({ maxHp: 104, regen: 0.3, armor: 2, dodge: 0, damage: 0, melee: 0.05, attackSpeed: 0, crit: 6, pickup: 130, luck: 0 }),
+            baseStats: S.base({ maxHp: 104, regen: 0.3, armor: 2, dodge: 0, damage: 0, melee: 0.05, attackSpeed: 0, crit: 0.06, pickup: 130, luck: 0 }),
             weapon: {
                 kind: 'thrust',
                 name: 'Boar Spear',
@@ -135,7 +135,7 @@
             blurb: 'Calls down a burst of holy light at your aim point, and can channel healing to survive.',
             baseSpeed: 168,
             radius: 17,
-            baseStats: S.base({ maxHp: 96, regen: 0.8, armor: 1, dodge: 0, damage: 0.05, attackSpeed: 0, crit: 5, pickup: 145, luck: 0 }),
+            baseStats: S.base({ maxHp: 96, regen: 0.8, armor: 1, dodge: 0, damage: 0.05, attackSpeed: 0, crit: 0.05, pickup: 145, luck: 0 }),
             weapon: {
                 kind: 'pulse',
                 name: 'Sanctified Wave',

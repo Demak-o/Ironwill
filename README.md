@@ -102,7 +102,7 @@ All four come from the **blue** unit set. Every class has a distinct weapon *and
 | **Lancer** | `Blue/Lancer` | *Boar Spear* — a narrow thrust that skewers a whole line | **Brace & Riposte** — take 65% less damage while braced, then empower your next thrust |
 | **Monk** | `Blue/Monk` | *Sanctified Wave* — a burst of holy light at your aim point (within a 300 px cast range) | **Mend Wounds** — channel to restore 35% of max health |
 
-Base stats differ per class — the Knight is a 130 HP tank with 3 armor, the Archer is an 88 HP glass cannon with 5% dodge, and so on. Each class also opens with a small bonus to its own damage type (melee / ranged / damage).
+Base stats differ per class — the Knight is a 130 HP tank with 1 base armor, the Archer is an 88 HP glass cannon with 5% dodge, and so on. Each class also opens with a small bonus to its own damage type (melee / ranged / damage). Crit chance is deliberately modest at the base (5–8%) and builds through items and boons.
 
 ---
 
